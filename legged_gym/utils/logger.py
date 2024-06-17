@@ -58,14 +58,14 @@ class Logger:
         self.state_log.clear()
         self.rew_log.clear()
 
-    def plot_states(self):
-        self.plot_process = Process(target=self._plot)
+    def plot_states(self, save_dir):
+        self.plot_process = Process(target=self._plot, args=(save_dir,))
         self.plot_process.start()
 
-    def _plot(self):
+    def _plot(self, save_dir):
         nb_rows = 3
         nb_cols = 3
-        fig, axs = plt.subplots(nb_rows, nb_cols)
+        fig, axs = plt.subplots(nb_rows, nb_cols, figsize=(15, 10))
         for key, value in self.state_log.items():
             time = np.linspace(0, len(value)*self.dt, len(value))
             break
@@ -123,7 +123,9 @@ class Logger:
         if log["dof_torque"]!=[]: a.plot(time, log["dof_torque"], label='measured')
         a.set(xlabel='time [s]', ylabel='Joint Torque [Nm]', title='Torque')
         a.legend()
-        plt.show()
+        plt.tight_layout()
+        # plt.savefig(f'{save_dir}/stats.svg', format='svg')
+        plt.savefig(f'{save_dir}/stats.png')
 
     def print_rewards(self):
         print("Average rewards per second:")
