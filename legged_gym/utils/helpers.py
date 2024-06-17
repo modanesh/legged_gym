@@ -130,6 +130,8 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
         # num envs
         if args.num_envs is not None:
             env_cfg.env.num_envs = args.num_envs
+        if args.tracking_sigma is not None:
+            env_cfg.rewards.tracking_sigma = args.tracking_sigma
     if cfg_train is not None:
         if args.seed is not None:
             cfg_train.seed = args.seed
@@ -164,6 +166,8 @@ def get_args():
         {"name": "--num_envs", "type": int, "help": "Number of environments to create. Overrides config file if provided."},
         {"name": "--seed", "type": int, "help": "Random seed. Overrides config file if provided."},
         {"name": "--max_iterations", "type": int, "help": "Maximum number of training iterations. Overrides config file if provided."},
+
+        {"name": "--tracking_sigma", "type": float, "help": "Tracking sigma for the reward shaping. Overrides config file if provided."},
     ]
     # parse arguments
     args = gymutil.parse_arguments(
