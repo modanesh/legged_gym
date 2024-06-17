@@ -29,11 +29,12 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
 import os
+import uuid
 from datetime import datetime
 from typing import Tuple
 import torch
 import numpy as np
-
+import wandb
 from rsl_rl.env import VecEnv
 from rsl_rl.runners import OnPolicyRunner
 
@@ -135,16 +136,24 @@ class TaskRegistry():
         # override cfg from args (if specified)
         _, train_cfg = update_cfg_from_args(None, train_cfg, args)
 
+        name_stamp = f'{train_cfg.runner.run_name}_{uuid.uuid4().hex[:8]}'
         if log_root=="default":
             log_root = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name)
-            log_dir = os.path.join(log_root, datetime.now().strftime('%b%d_%H-%M-%S') + '_' + train_cfg.runner.run_name)
+            log_dir = os.path.join(log_root, name_stamp)
         elif log_root is None:
             log_dir = None
         else:
-            log_dir = os.path.join(log_root, datetime.now().strftime('%b%d_%H-%M-%S') + '_' + train_cfg.runner.run_name)
-        
+            log_dir = os.path.join(log_root, name_stamp)
+
+        if log_dir is not None and not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
         train_cfg_dict = class_to_dict(train_cfg)
-        runner = OnPolicyRunner(env, train_cfg_dict, log_dir, device=args.rl_device)
+
+        run_name = f"{train_cfg.runner.experiment_name}_nenvs{args.num_envs}_{name_stamp}" if train_cfg.runner.experiment_name is not None else f"nenvs{args.num_envs}_{name_stamp}"
+        wandb.init(entity="modanesh", project="legged-gym", config=train_cfg_dict, name=run_name)
+
+        runner = OnPolicyRunner(env, train_cfg_dict, log_dir, device=args.rl_device, wandb=wandb)
         #save resume path before creating a new log_dir
         resume = train_cfg.runner.resume
         if resume:
